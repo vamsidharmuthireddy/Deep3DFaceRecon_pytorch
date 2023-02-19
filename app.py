@@ -119,7 +119,7 @@ def main():
 
     if input_image_path is not None and input_image_name is not None:
         if st.button(label="Test"):
-            test_command = "python test_2.py --name=demo_model --epoch=20 --img_folder={INPUT_DIR_PATH} --img_name={IMAGE_NAME}".format(
+            test_command = "python3 test_2.py --name=demo_model --epoch=20 --img_folder={INPUT_DIR_PATH} --img_name={IMAGE_NAME}".format(
                 INPUT_DIR_PATH=input_dir_path, IMAGE_NAME=input_image_name)
 
             os.system(test_command)
