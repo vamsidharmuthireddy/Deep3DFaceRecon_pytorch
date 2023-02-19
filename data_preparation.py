@@ -38,6 +38,8 @@ def data_prepare(folder_list,mode):
     lms_list = ['.'.join(i.split('.')[:-1]) + '.txt' for i in lms_list]
     
     lms_list_final, imgs_list_final, msks_list_final = check_list(lms_list, imgs_list, msks_list) # check if the path is valid
+    print(lms_list)
+    print(imgs_list_final)
     write_list(lms_list_final, imgs_list_final, msks_list_final, mode=mode) # save files
 
 if __name__ == '__main__':
