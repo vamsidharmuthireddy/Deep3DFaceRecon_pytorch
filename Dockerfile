@@ -1,4 +1,5 @@
-FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:11.4.0-base-ubuntu20.04
+# FROM nvidia/cuda:11.4.0-cudnn8-devel-ubuntu20.04
 # FROM pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime
 
 # Install base utilities
