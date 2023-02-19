@@ -23,7 +23,6 @@ def get_data_path(root='examples'):
     lm_path = [os.path.join(i.replace(i.split(
         os.path.sep)[-1], ''), 'detections', i.split(os.path.sep)[-1]) for i in lm_path]
 
-
     return im_path, lm_path
 
 
@@ -79,6 +78,72 @@ def main(rank, opt, name='examples'):
             os.path.sep)[-1], 'epoch_%s_%06d' % (opt.epoch, 0), img_name+'.mat'))  # save predicted coefficients
 
 
+def load_model(rank, opt):
+    device = torch.device(rank)
+    torch.cuda.set_device(device)
+    model = create_model(opt)
+    model.setup(opt)
+    model.device = device
+    model.parallelize()
+    model.eval()
+    visualizer = MyVisualizer(opt)
+
+    return device, model, visualizer
+
+
+def test_image(rank, opt, device, model, visualizer, input_img_name, name='examples'):
+
+    im_path = [os.path.join(name, input_img_name)]
+    lm_path = [i.replace('png', 'txt').replace('jpg', 'txt') for i in im_path]
+    lm_path = [os.path.join(i.replace(i.split(
+        os.path.sep)[-1], ''), 'detections', i.split(os.path.sep)[-1]) for i in lm_path]
+    # lm_path = im_path.replace('png', 'txt').replace('jpg', 'txt')
+    # lm_path = os.path.join(lm_path.replace(lm_path.split(
+    #     os.path.sep)[-1], ''), 'detections', lm_path.split(os.path.sep)[-1])
+
+    # im_path, lm_path = get_data_path(name)
+
+    # im_path = [os.path.join(name, i) for i in sorted(
+    #     os.listdir(name)) if i.endswith('png') or i.endswith('jpg')]
+    # lm_path = [i.replace('png', 'txt').replace('jpg', 'txt') for i in im_path]
+    # lm_path = [os.path.join(i.replace(i.split(
+    #     os.path.sep)[-1], ''), 'detections', i.split(os.path.sep)[-1]) for i in lm_path]
+
+    lm3d_std = load_lm3d(opt.bfm_folder)
+
+    i = 0
+    # epoch = 20
+
+    # for i in range(len(im_path)):
+    print(i, im_path[i])
+    img_name = im_path[i].split(
+        os.path.sep)[-1].replace('.png', '').replace('.jpg', '')
+
+    if not os.path.isfile(lm_path[i]):
+        print("%s is not found !!!" % lm_path[i])
+        # continue
+        return
+    im_tensor, lm_tensor = read_data(im_path[i], lm_path[i], lm3d_std)
+    data = {
+        'imgs': im_tensor,
+        'lms': lm_tensor
+    }
+    model.set_input(data)  # unpack data from data loader
+    model.test()           # run inference
+    visuals = model.get_current_visuals()  # get image results
+    visualizer.display_current_results(visuals, 0, opt.epoch, dataset=name.split(os.path.sep)[-1],
+                                       save_results=True, count=i, name=img_name, add_image=False)
+
+    model.save_mesh(os.path.join(visualizer.img_dir, name.split(
+        os.path.sep)[-1], 'epoch_%s_%06d' % (opt.epoch, 0), img_name+'.obj'))  # save reconstruction meshes
+    model.save_coeff(os.path.join(visualizer.img_dir, name.split(
+        os.path.sep)[-1], 'epoch_%s_%06d' % (opt.epoch, 0), img_name+'.mat'))  # save predicted coefficients
+
+
 if __name__ == '__main__':
     opt = TestOptions().parse()  # get test options
-    main(0, opt, opt.img_folder)
+    # main(0, opt,opt.img_folder)
+    device, model, visualizer = load_model(0, opt)
+
+    test_image(rank=0, opt=opt, name=opt.img_folder, input_img_name=opt.img_name,
+               device=device, model=model, visualizer=visualizer)
